@@ -1,0 +1,25 @@
+version: 0.2
+# brent lemons 20201227
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 12.x
+    commands:
+      - echo Installing app dependencies...
+      - yarn install
+  build:
+    commands:
+      - echo Buildins...
+#      - yarn clean
+      - yarn build
+  post_build:
+    commands:
+      - echo Buildins...
+#      - yarn deploy
+#      - yarn invalidate-cloudfront
+
+artifacts:
+  files:
+    - outputtemplate.yaml
+  discard-paths: yes

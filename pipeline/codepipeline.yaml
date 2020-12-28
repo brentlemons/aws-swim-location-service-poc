@@ -1,0 +1,120 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Template describing the Code Suite tools
+
+Parameters:
+
+  ArtifactBucketName:
+    Type: String
+    Description: Where this pipeline should store artifacts.
+
+  WebsiteBucketName:
+    Type: String
+    Description: Where this pipeline should store artifacts.
+
+  CodePipelineServiceRoleArn:
+    Type: String
+    Description: Arn referencing service-role CodePipeline will use.
+
+  CodeBuildServiceRoleArn:
+    Type: String
+    Description: Arn referencing service-role CodeBuild will use.
+
+  GitHubUsername:
+    Type: String
+    Description: Which branch to use.
+
+  GitHubRepoName:
+    Type: String
+    Description: Which branch to use.
+
+  GitHubBranchName:
+    Type: String
+    Description: Which branch to use.
+    Default: 'master'
+
+  GitHubToken:
+    Type: String
+    Description: Which branch to use.
+
+Resources:
+
+  BuildStep:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-build"
+      Artifacts:
+        Type: CODEPIPELINE
+        Name: !Sub "${AWS::StackName}-build"
+      Description: Builds the output artifacts
+      TimeoutInMinutes: 5
+      Environment:
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+        ComputeType: BUILD_GENERAL1_SMALL
+      ServiceRole: !Ref CodeBuildServiceRoleArn
+      Source:
+        Type: CODEPIPELINE
+
+  CodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: !Ref GitHubRepoName
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactBucketName
+      RestartExecutionOnUpdate: true
+      RoleArn: !Ref CodePipelineServiceRoleArn
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: '1'
+              Configuration:
+                Owner: !Ref GitHubUsername
+                Repo: !Ref GitHubRepoName
+                Branch: !Ref GitHubBranchName
+                OAuthToken: !Ref GitHubToken
+              Namespace: 'SourceVariables'
+              InputArtifacts: []
+              OutputArtifacts:
+                - Name: SourceArtifact
+
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref BuildStep
+              Namespace: 'BuildVariables'
+              InputArtifacts:
+                - Name: SourceArtifact
+              OutputArtifacts:
+                - Name: BuildArtifact
+
+        - Name: Deploy
+          Actions:
+            - Name: Deploy
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              InputArtifacts:
+                - Name: BuildArtifact
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                RoleArn: !Ref CodePipelineServiceRoleArn
+                StackName: !Ref GitHubRepoName
+                Capabilities: CAPABILITY_IAM,CAPABILITY_AUTO_EXPAND
+                TemplatePath: BuildArtifact::outputtemplate.yaml
+#                ParameterOverrides: !Sub '{"ECRRepositoryUri": "${ECRRepositoryUri}","ECRImageTag":"#{BuildVariables.IMAGE_TAG}"}'                               
+                
+                
