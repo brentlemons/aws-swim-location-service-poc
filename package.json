@@ -1,0 +1,36 @@
+{
+  "name": "aws-swim-location-service-poc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "pack": "npm-pack-zip",
+    "test": "mocha tests/unit/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brentlemons/aws-swim-location-service-poc.git"
+  },
+  "author": "Brent Lemons",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/brentlemons/aws-swim-location-service-poc/issues"
+  },
+  "files": [
+    "/dist"
+  ],
+  "homepage": "https://github.com/brentlemons/aws-swim-location-service-poc#readme",
+  "devDependencies": {
+    "@types/node": "^13.11.1",
+    "aws-sdk": "^2.656.0",
+    "chai": "^4.2.0",
+    "mocha": "^7.1.1",
+    "npm-pack-zip": "^1.2.7",
+    "tslint": "^6.1.1",
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "tslint-config-airbnb": "^5.11.2"
+  }
+}
